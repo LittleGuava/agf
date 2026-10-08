@@ -19,7 +19,7 @@ jobs:
           fetch-depth: 0
 
       - name: Check DCO
-        uses: christophebedard/dco-check@045160e1d11d727abb5424f6a234a1d9fdda7d22 # 0.6.0
+        uses: christophebedard/dco-check@ec8bfc43106afe98b323ace9133650df10497e12 # 0.5.1
         with:
           python-version: '3.12'
         env:
