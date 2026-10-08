@@ -17,7 +17,6 @@ env:
 
 permissions:
   contents: read
-  actions: write
 
 jobs:
   changes:
@@ -59,21 +58,12 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Cache npm global packages
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/.npm
-          key: npm-cache-${{ runner.os }}-${{ hashFiles('bun.lock') }}
-          restore-keys: |
-            npm-cache-${{ runner.os }}-
-
+      # Same key as the Node 22 leg of test.yml (same bun install, same ABI).
       - name: Cache node_modules
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: node_modules
-          key: node-modules-${{ runner.os }}-${{ hashFiles('bun.lock') }}
-          restore-keys: |
-            node-modules-${{ runner.os }}-
+          key: node-modules-${{ runner.os }}-node22-${{ hashFiles('bun.lock') }}
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
