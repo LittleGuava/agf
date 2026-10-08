@@ -1,5 +1,6 @@
 name: DCO check
 
+# GitHub-hosted on purpose — fork PRs run here. See the note in test.yml.
 on:
   pull_request:
     branches:
@@ -10,7 +11,7 @@ permissions:
 
 jobs:
   dco:
-    runs-on: [self-hosted]
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout repository
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
