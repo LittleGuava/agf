@@ -8,9 +8,13 @@ name: Dependabot auto-merge
 #   may run on the self-hosted machine. The job never checks out code.
 # - Gate on the PR author, not `github.actor`: the actor is whoever triggered
 #   the event (a re-run, a rebase), which is not proof the PR came from
-#   Dependabot.
-# - No auto-approve: a human review is still the gate; this only queues the
-#   merge for when branch protection is satisfied.
+#   Dependabot. The literal repo name is deliberate: this repo is itself a
+#   fork, so `head.repo.fork` can't tell "ours" from "someone else's".
+# - No auto-approve, and the merge step is opt-in: it only runs when the repo
+#   variable DEPENDABOT_AUTOMERGE is 'true'. Set it ONLY after enabling
+#   "Allow auto-merge" AND a ruleset on main that requires the test/typecheck/
+#   dco checks. Without required checks the PR is already "clean" and
+#   `gh pr merge --auto` merges it on the spot, with no gate at all.
 on:
   pull_request:
 
@@ -34,8 +38,9 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Enable auto-merge
         if: >-
-          steps.metadata.outputs.update-type == 'version-update:semver-patch' ||
-          steps.metadata.outputs.update-type == 'version-update:semver-minor'
+          vars.DEPENDABOT_AUTOMERGE == 'true' &&
+          (steps.metadata.outputs.update-type == 'version-update:semver-patch' ||
+          steps.metadata.outputs.update-type == 'version-update:semver-minor')
         run: gh pr merge --auto --squash "$PR_URL"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
