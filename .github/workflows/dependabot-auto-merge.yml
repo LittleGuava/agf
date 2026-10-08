@@ -1,30 +1,42 @@
 name: Dependabot auto-merge
 
+# Hardened on purpose — read before loosening:
+# - `pull_request`, not `pull_request_target`: the token never gets write
+#   access in the context of a fork PR, and Dependabot PRs get exactly the
+#   job-level permissions below.
+# - GitHub-hosted runner: this is a public repo, so nothing triggered by a PR
+#   may run on the self-hosted machine. The job never checks out code.
+# - Gate on the PR author, not `github.actor`: the actor is whoever triggered
+#   the event (a re-run, a rebase), which is not proof the PR came from
+#   Dependabot.
+# - No auto-approve: a human review is still the gate; this only queues the
+#   merge for when branch protection is satisfied.
 on:
-  pull_request_target:
+  pull_request:
 
-permissions:
-  contents: write
-  pull-requests: write
+permissions: {}
 
 jobs:
   auto-merge:
-    runs-on: [self-hosted]
-    if: ${{ github.actor == 'dependabot[bot]' }}
+    if: >-
+      github.repository == 'LittleGuava/agf' &&
+      github.event.pull_request.user.login == 'dependabot[bot]'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      pull-requests: write
     steps:
       - name: Dependabot metadata
         id: metadata
-        uses: dependabot/fetch-metadata@cd25f19082b76d6c6f4402ed615afb3e5d278189
+        uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Auto-approve
-        run: gh pr review --approve "$PR_URL"
-        env:
-          PR_URL: ${{ github.event.pull_request.html_url }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Enable auto-merge
-        if: ${{ steps.metadata.outputs.update-type == 'version-update:semver-patch' || steps.metadata.outputs.update-type == 'version-update:semver-minor' }}
+        if: >-
+          steps.metadata.outputs.update-type == 'version-update:semver-patch' ||
+          steps.metadata.outputs.update-type == 'version-update:semver-minor'
         run: gh pr merge --auto --squash "$PR_URL"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
